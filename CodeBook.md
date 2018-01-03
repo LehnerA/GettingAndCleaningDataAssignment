@@ -1,14 +1,11 @@
 # CodeBook for Human Activity Recognition Using Smartphones Dataset
-
 The raw data set (Version 1.0) is provided by:
-==================================================================
 Jorge L. Reyes-Ortiz, Davide Anguita, Alessandro Ghio, Luca Oneto.
 Smartlab - Non Linear Complex Systems Laboratory
 DITEN - Università degli Studi di Genova.
 Via Opera Pia 11A, I-16145, Genoa, Italy.
 activityrecognition@smartlab.ws
 www.smartlab.ws
-==================================================================
 
 ## Data Input
 The input data for the analysis are the training and the test sets including the list of all features, activity labels as well as training and test labels.
