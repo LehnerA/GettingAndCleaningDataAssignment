@@ -8,19 +8,22 @@ mergeSmartphoneData <- function(directory, activity.labels, feature.labels)
     # load test data sets
     test.data <- loadData(paste0(directory, "/test"), "test")
     
-    # combine data
+    # make data frame of test data
     smartphone.data.test <- as.data.frame(as.data.frame(test.data))
-    
+    # make data frame of train data
     smartphone.data.train <- as.data.frame(as.data.frame(train.data))
     
     # setup column names of smartphone dataset
     smartphone.data.names <- c("subjectId", "dataType", "activity", as.character(feature.labels[[2]]))
     
+    # write the column names of the data sets to allow combining them
     colnames(smartphone.data.test) <- smartphone.data.names
     colnames(smartphone.data.train) <- smartphone.data.names
     
+    # combine both train and test data sets to a complete data set
     smartphone.data <- rbind(smartphone.data.test, smartphone.data.train)
     
+    #  replace the activity numbers with the according labels
     smartphone.data$activity <- lapply(smartphone.data$activity, function(x)
     {
         if(x == 1)
@@ -49,6 +52,7 @@ mergeSmartphoneData <- function(directory, activity.labels, feature.labels)
         }
     })
     
+    # make a factor of the activities
     smartphone.data$activity <- as.factor(unlist(smartphone.data$activity))
     
     return(smartphone.data)
@@ -56,37 +60,37 @@ mergeSmartphoneData <- function(directory, activity.labels, feature.labels)
 
 extractMeanAndStdValues <- function(dataset, feature.labels)
 {
+    # get all column names with mean and standard deviation values
     mean.std.colnames <- grep("mean\\(\\)|std\\(\\)", unlist(feature.labels[[2]]), value = TRUE)
+    # extract these columns as well as the subject id data type and activity
     return(dataset[, c("subjectId", "dataType", "activity", mean.std.colnames)])
-}
-
-loadActivityLabels <- function(filename)
-{
-    return(read.table(filename))
-}
-
-loadFeatureLabels <- function(filename)
-{
-    return(read.table(filename))
 }
 
 loadData <- function(directory, datatype)
 {
+    # read the subject ids of the data set
     data.subjects <- read.table(paste0(directory, "/subject_", datatype, ".txt"))
+    # read the data set
     data.set <- read.table(paste0(directory, "/X_", datatype, ".txt"))
+    # read the activities for the data set
     data.activity <- read.table(paste0(directory, "/y_", datatype, ".txt"))
     
+    # return a list of all the read values -> include the data type (training or test set value)
     return(list(data.subjects, rep(toupper(datatype), nrow(data.subjects)), data.activity, data.set))
 }
 
 calculateMeansForColumns <- function(dataset)
 {
     require(dplyr)
+    # group data by subject id and activity
+    # summarize all numeric values by calculating the mean value
+    # ungroup the data and arrange by subject id
     avg <- dataset %>%
                group_by(subjectId, activity) %>%
                summarize_if(is.numeric, mean) %>%
                ungroup() %>%
                arrange(subjectId)
+    # set the column names of the newly calculated columns by adding "mean"
     colnames(avg)[-(1:2)] <- paste(colnames(avg)[-(1:2)], "mean", sep ="-")
     
     return(avg)
@@ -96,10 +100,10 @@ calculateMeansForColumns <- function(dataset)
 directory <- "UCI HAR Dataset"
 
 # get activity labels
-activity.labels <- loadActivityLabels(paste0(directory, "/activity_labels.txt"))
+activity.labels <- read.table(paste0(directory, "/activity_labels.txt"))
 
 # get features
-feature.labels <- loadFeatureLabels(paste0(directory, "/features.txt"))
+feature.labels <- read.table(paste0(directory, "/features.txt"))
 
 # 1st, 3rd, 4th step: merge smartphone data into one data set, set the activity names, set the variable names
 merged.smartphone.data <- mergeSmartphoneData(directory, activity.labels, feature.labels)
@@ -109,3 +113,6 @@ extracted.smartphone.data <- extractMeanAndStdValues(merged.smartphone.data, fea
 
 # 5th step: new data set -> average of each variable for each activity and each subject
 avg.smartphone.data <- calculateMeansForColumns(extracted.smartphone.data)
+
+# write the table with the data
+write.table(avg.smartphone.data, "accelerometer_data_set_averages.txt", sep = " ", row.names = FALSE, col.names = FALSE, quote = FALSE)
